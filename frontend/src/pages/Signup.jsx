@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, LogIn, Award } from 'lucide-react';
-import { authAPI } from '../services/api';
 import '../styles/Auth.css';
 
 function Signup() {
@@ -25,15 +24,30 @@ function Signup() {
     setLoading(true);
 
     try {
-      const response = await authAPI.register(email, password, name);
+      const response = await fetch('http://localhost:8000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password, name })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(data?.detail || 'Registration failed');
+        return;
+      }
+
       // Store token and user data
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
       // Redirect immediately after storing (no delay needed now)
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError('Registration failed');
+    } finally {
       setLoading(false);
     }
   };

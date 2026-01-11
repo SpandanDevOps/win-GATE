@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, LogIn, Award } from 'lucide-react';
-import { authAPI } from '../services/api';
 import '../styles/Auth.css';
 
 function Login() {
@@ -17,14 +16,29 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(email, password);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await fetch('http://localhost:8000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(data?.detail || 'Login failed');
+        return;
+      }
+
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
       // Redirect immediately after storing (no delay needed now)
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError('Login failed');
+    } finally {
       setLoading(false);
     }
   };
@@ -83,7 +97,7 @@ function Login() {
         </form>
 
         <div className="auth-footer">
-          <p>Don't have an account? <Link to="/register">Sign up here</Link></p>
+          <p>Don't have an account? <Link to="/signup">Sign up here</Link></p>
         </div>
       </div>
     </div>

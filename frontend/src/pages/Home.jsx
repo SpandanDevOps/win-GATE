@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, RotateCcw, Moon, Sun, TrendingUp, CheckCircle, RefreshCw, Clock, BarChart3, Award, RotateCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, RotateCcw, Moon, Sun, TrendingUp, CheckCircle, RefreshCw, Clock, BarChart3, Award, RotateCw, LogIn, UserPlus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Curriculum from './Curriculum';
 import { visitorAPI } from '../services/api';
@@ -13,21 +14,30 @@ function Dashboard() {
   const [dailyHours, setDailyHours] = useState(0);
   const [studyHoursData, setStudyHoursData] = useState(Array(31).fill(0));
   const [syncing, setSyncing] = useState(false);
+  const navigate = useNavigate();
 
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
     const initData = async () => {
-      const visitorId = localStorage.getItem('visitorId');
-      // Register visitor on first load
       try {
-        await visitorAPI.register(visitorId);
+        const visitorId = localStorage.getItem('visitorId');
+        // Register visitor on first load (non-blocking)
+        visitorAPI.register(visitorId).catch(() => {
+          console.log('Visitor registration failed (expected without backend)');
+        });
+        // Then load month data
+        await loadMonthData();
       } catch (error) {
-        console.log('Visitor registration failed (may already exist):', error);
+        console.log('Dashboard initialization failed, using fallback:', error);
+        // Fallback: just load localStorage data
+        const key = getStorageKey(`month_${selectedMonth}`);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          setStudyHoursData(JSON.parse(stored));
+        }
       }
-      // Then load month data
-      await loadMonthData();
     };
     initData();
   }, [selectedMonth]);
@@ -169,6 +179,24 @@ function Dashboard() {
               <RotateCw size={20} />
               Reset
             </button>
+            <div className="auth-buttons">
+              <button 
+                onClick={() => navigate('/login')} 
+                className="btn-login"
+                title="Login to your account"
+              >
+                <LogIn size={18} />
+                Login
+              </button>
+              <button 
+                onClick={() => navigate('/signup')} 
+                className="btn-signup"
+                title="Create a new account"
+              >
+                <UserPlus size={18} />
+                Sign Up
+              </button>
+            </div>
           </div>
         </div>
 

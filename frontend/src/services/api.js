@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:8000/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -36,10 +36,6 @@ export const visitorAPI = {
 export const authAPI = {
   register: (email, password, name) =>
     apiClient.post('/auth/register', { email, password, name }),
-  verifyOTP: (email, otp) =>
-    apiClient.post('/auth/verify-otp', { email, otp }),
-  resendOTP: (email) =>
-    apiClient.post('/auth/resend-otp', { email }),
   login: (email, password) =>
     apiClient.post('/auth/login', { email, password }),
   getCurrentUser: () =>
