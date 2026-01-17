@@ -27,6 +27,10 @@ function Login() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (response.status === 403 && data?.detail?.includes('verify OTP')) {
+          setError('Please verify your email first. Check your inbox for OTP.');
+          return;
+        }
         setError(data?.detail || 'Login failed');
         return;
       }
@@ -35,7 +39,7 @@ function Login() {
       localStorage.setItem('user', JSON.stringify(data.user));
       
       // Redirect immediately after storing (no delay needed now)
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError('Login failed');
     } finally {
@@ -98,6 +102,7 @@ function Login() {
 
         <div className="auth-footer">
           <p>Don't have an account? <Link to="/signup">Sign up here</Link></p>
+          <p>Prefer OTP login? <Link to="/otp-login">Login with OTP</Link></p>
         </div>
       </div>
     </div>

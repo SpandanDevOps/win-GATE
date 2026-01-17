@@ -28,81 +28,6 @@ async def test_health_endpoint():
         print(f"✗ Health endpoint error: {e}")
         return False
 
-async def test_visitor_registration():
-    """Test visitor registration"""
-    print("Testing visitor registration...")
-    try:
-        async with httpx.AsyncClient() as client:
-            visitor_data = {"visitor_id": "test_visitor_123"}
-            response = await client.post(
-                f"{BASE_URL}/api/visitor/register",
-                json=visitor_data
-            )
-            if response.status_code == 200:
-                print("✓ Visitor registration working")
-                return True
-            else:
-                print(f"✗ Visitor registration failed: {response.status_code}")
-                return False
-    except Exception as e:
-        print(f"✗ Visitor registration error: {e}")
-        return False
-
-async def test_study_hours_visitor():
-    """Test visitor study hours endpoints"""
-    print("Testing visitor study hours...")
-    try:
-        async with httpx.AsyncClient() as client:
-            # Test saving study hours
-            study_data = {
-                "visitor_id": "test_visitor_123",
-                "month": 11,
-                "year": 2024,
-                "day": 15,
-                "hours": 6.5
-            }
-            response = await client.post(
-                f"{BASE_URL}/api/visitor/study-hours/save",
-                json=study_data
-            )
-            if response.status_code == 200:
-                print("✓ Visitor study hours saving working")
-                return True
-            else:
-                print(f"✗ Visitor study hours saving failed: {response.status_code}")
-                return False
-    except Exception as e:
-        print(f"✗ Visitor study hours error: {e}")
-        return False
-
-async def test_curriculum_visitor():
-    """Test visitor curriculum endpoints"""
-    print("Testing visitor curriculum...")
-    try:
-        async with httpx.AsyncClient() as client:
-            # Test saving curriculum topic
-            curriculum_data = {
-                "visitor_id": "test_visitor_123",
-                "subject": "Engineering Mathematics",
-                "topic": "Discrete Mathematics",
-                "watched": True,
-                "revised": False,
-                "tested": False
-            }
-            response = await client.post(
-                f"{BASE_URL}/api/visitor/curriculum/save",
-                json=curriculum_data
-            )
-            if response.status_code == 200:
-                print("✓ Visitor curriculum saving working")
-                return True
-            else:
-                print(f"✗ Visitor curriculum saving failed: {response.status_code}")
-                return False
-    except Exception as e:
-        print(f"✗ Visitor curriculum error: {e}")
-        return False
-
 async def test_api_docs():
     """Test API documentation endpoint"""
     print("Testing API documentation endpoint...")
@@ -126,9 +51,6 @@ async def run_all_tests():
     
     tests = [
         test_health_endpoint,
-        test_visitor_registration,
-        test_study_hours_visitor,
-        test_curriculum_visitor,
         test_api_docs
     ]
     

@@ -15,7 +15,7 @@ from typing import Optional
 from sqlalchemy.exc import IntegrityError
 
 # Import our database models and dependencies
-from database_models import get_db, User, StudyHours, CurriculumData, VisitorData
+from database_models import get_db, User, StudyHours, CurriculumData
 from utils import (
     get_password_hash,
     verify_password,

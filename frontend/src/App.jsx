@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom'
+import Landing from './pages/Landing';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import OtpSignup from './pages/OtpSignup';
+import OtpLogin from './pages/OtpLogin';
 import Curriculum from './pages/Curriculum';
 import './App.css';
 
@@ -12,13 +15,6 @@ function App() {
 
   useEffect(() => {
     try {
-      // Initialize visitor ID for separated records
-      let visitorId = localStorage.getItem('visitorId');
-      if (!visitorId) {
-        visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('visitorId', visitorId);
-      }
-      
       // Simulate loading time
       const timer = setTimeout(() => {
         setLoading(false);
@@ -75,9 +71,12 @@ function App() {
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/dashboard" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<OtpSignup />} />
+        <Route path="/otp-login" element={<OtpLogin />} />
+        <Route path="/legacy-signup" element={<Signup />} />
         <Route path="/curriculum" element={<Curriculum />} />
       </Routes>
     </div>

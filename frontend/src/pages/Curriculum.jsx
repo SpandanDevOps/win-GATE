@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, RotateCcw, CheckCircle2 } from 'lucide-react';
-import { visitorAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { curriculumAPI } from '../services/api';
 import '../styles/Curriculum.css';
 
 const Curriculum = ({ darkMode }) => {
@@ -8,6 +9,7 @@ const Curriculum = ({ darkMode }) => {
   const [expandedSubject, setExpandedSubject] = useState('Engineering Mathematics');
   const [curriculumData, setCurriculumData] = useState({});
   const [syncing, setSyncing] = useState(false);
+  const navigate = useNavigate();
 
   // CS Curriculum Structure
   const curriculumStructure = {
@@ -98,56 +100,39 @@ const Curriculum = ({ darkMode }) => {
 
   useEffect(() => {
     const initData = async () => {
-      const visitorId = localStorage.getItem('visitorId');
-      // Register visitor on first load
-      try {
-        await visitorAPI.register(visitorId);
-      } catch (error) {
-        console.log('Visitor registration failed (may already exist):', error);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
       }
-      // Then load curriculum data
       await loadCurriculumData();
     };
     initData();
   }, []);
 
-  const getStorageKey = (prefix) => {
-    const visitorId = localStorage.getItem('visitorId');
-    return `${prefix}_${visitorId}`;
-  };
-
   const loadCurriculumData = async () => {
-    const visitorId = localStorage.getItem('visitorId');
-    
-    // Try to load from backend first
     try {
-      const response = await visitorAPI.getCurriculum(visitorId);
-      if (response.data && response.data.length > 0) {
-        const dataFromBackend = {};
-        response.data.forEach(record => {
-          if (!dataFromBackend[record.subject]) dataFromBackend[record.subject] = {};
-          dataFromBackend[record.subject][record.topic] = {
-            watched: record.watched,
-            revised: record.revised,
-            tested: record.tested
+      const response = await curriculumAPI.getAll();
+      const subjectsArr = response?.data?.subjects || [];
+      const dataFromBackend = {};
+      subjectsArr.forEach((subjectBlock) => {
+        const subj = subjectBlock.subject;
+        if (!dataFromBackend[subj]) dataFromBackend[subj] = {};
+        (subjectBlock.topics || []).forEach((t) => {
+          dataFromBackend[subj][t.topic] = {
+            watched: Boolean(t.watched),
+            revised: Boolean(t.revised),
+            tested: Boolean(t.tested),
           };
         });
-        setCurriculumData(dataFromBackend);
-        // Also cache in localStorage
-        const key = getStorageKey('curriculum');
-        localStorage.setItem(key, JSON.stringify(dataFromBackend));
-        return;
-      }
+      });
+      setCurriculumData(dataFromBackend);
+      return;
     } catch (error) {
-      console.log('Backend load failed, falling back to localStorage');
+      console.log('Backend load failed:', error);
     }
-    
-    // Fallback to localStorage if backend fails
-    const key = getStorageKey('curriculum');
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      setCurriculumData(JSON.parse(stored));
-    }
+
+    setCurriculumData({});
   };
 
   const toggleTopic = async (subjectName, topic, field) => {
@@ -159,27 +144,22 @@ const Curriculum = ({ darkMode }) => {
     if (!updated[subjectName][topic]) updated[subjectName][topic] = { watched: false, revised: false, tested: false };
     updated[subjectName][topic][field] = newValue;
     
-    // Update local state and cache immediately
-    const key = getStorageKey('curriculum');
-    localStorage.setItem(key, JSON.stringify(updated));
+    // Update local state immediately
     setCurriculumData(updated);
     
     // Sync to backend
     setSyncing(true);
     try {
-      const visitorId = localStorage.getItem('visitorId');
       const topicData = updated[subjectName][topic];
-      await visitorAPI.saveCurriculum(
-        visitorId,
-        subjectName,
+      await curriculumAPI.saveTopic({
+        subject: subjectName,
         topic,
-        topicData.watched,
-        topicData.revised,
-        topicData.tested
-      );
+        watched: topicData.watched,
+        revised: topicData.revised,
+        tested: topicData.tested,
+      });
     } catch (error) {
       console.error('Error syncing to backend:', error);
-      // Data is still saved in localStorage, so user won't lose anything
     } finally {
       setSyncing(false);
     }
@@ -219,10 +199,6 @@ const Curriculum = ({ darkMode }) => {
           </div>
           <div className="header-buttons">
             <button className={`subject-btn ${subject === 'cs' ? 'active' : ''}`} onClick={() => setSubject('cs')}>CS</button>
-            <button className="reset-btn" onClick={() => window.location.reload()}>
-              <RotateCcw size={18} />
-              Reset
-            </button>
           </div>
         </div>
       </div>

@@ -44,7 +44,7 @@ function Signup() {
       localStorage.setItem('user', JSON.stringify(data.user));
       
       // Redirect immediately after storing (no delay needed now)
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError('Registration failed');
     } finally {

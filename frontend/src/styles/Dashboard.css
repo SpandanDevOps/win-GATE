@@ -227,7 +227,13 @@
   color: #6b7280;
 }
 
-.nav-tab.active {
+.dashboard.dark .nav-tab.active {
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  color: white;
+  border-bottom-color: white;
+}
+
+.dashboard.light .nav-tab.active {
   background: linear-gradient(to right, #3b82f6, #2563eb);
   color: white;
   border-bottom-color: white;

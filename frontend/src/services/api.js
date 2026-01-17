@@ -9,29 +9,14 @@ const apiClient = axios.create({
   }
 });
 
-// Visitor API (no authentication, just visitor ID)
-export const visitorAPI = {
-  register: (visitorId) =>
-    apiClient.post('/visitor/register', { visitorId }),
-  
-  getStudyHours: (visitorId, month, year) =>
-    apiClient.get(`/visitor/study-hours/${visitorId}/${month}/${year}`),
-  
-  saveStudyHours: (visitorId, month, year, day, hours) =>
-    apiClient.post('/visitor/study-hours/save', { visitorId, month, year, day, hours }),
-  
-  getCurriculum: (visitorId) =>
-    apiClient.get(`/visitor/curriculum/${visitorId}`),
-  
-  saveCurriculum: (visitorId, subject, topic, watched, revised, tested) =>
-    apiClient.post('/visitor/curriculum/save', { visitorId, subject, topic, watched, revised, tested }),
-  
-  getAllData: (visitorId) =>
-    apiClient.get(`/visitor/data/${visitorId}`),
-  
-  deleteAllData: (visitorId) =>
-    apiClient.delete(`/visitor/data/${visitorId}`)
-};
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const authAPI = {
   register: (email, password, name) =>

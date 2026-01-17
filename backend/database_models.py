@@ -3,10 +3,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
 from datetime import datetime
+from dotenv import load_dotenv
 import os
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:Samik19@localhost:5432/win_gate_db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Create engine and session
 engine = create_engine(DATABASE_URL, echo=True)
@@ -22,10 +26,13 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=False)
+    is_verified = Column(Boolean, default=False)
+    otp_hash = Column(String, nullable=True)
+    otp_expiry = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
-    # Relationships
+    # Relationships 
     study_hours = relationship("StudyHours", back_populates="user")
     curriculum_data = relationship("CurriculumData", back_populates="user")
 
@@ -61,15 +68,6 @@ class CurriculumData(Base):
     
     # Relationships
     user = relationship("User", back_populates="curriculum_data")
-
-class VisitorData(Base):
-    __tablename__ = "visitor_data"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    visitor_id = Column(String, unique=True, nullable=False, index=True)
-    created_at = Column(DateTime, default=func.now())
-    last_activity = Column(DateTime, default=func.now(), onupdate=func.now())
-    
 
 
 # Create all tables

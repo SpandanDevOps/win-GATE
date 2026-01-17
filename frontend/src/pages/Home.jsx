@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, RotateCcw, Moon, Sun, TrendingUp, CheckCircle, RefreshCw, Clock, BarChart3, Award, RotateCw, LogIn, UserPlus } from 'lucide-react';
+import { BookOpen, RotateCcw, Moon, Sun, TrendingUp, CheckCircle, RefreshCw, Clock, BarChart3, Award, RotateCw, LogIn, UserPlus, LogOut, UserCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Curriculum from './Curriculum';
-import { visitorAPI } from '../services/api';
+import { studyHoursAPI } from '../services/api';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
   const [darkMode, setDarkMode] = useState(true);
   const [activeSection, setActiveSection] = useState('curriculum');
+  const [authUser, setAuthUser] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedDay, setSelectedDay] = useState(null);
   const [dailyHours, setDailyHours] = useState(0);
@@ -20,64 +21,81 @@ function Dashboard() {
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   useEffect(() => {
+    const loadAuthUser = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setAuthUser(null);
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:8000/api/auth/me', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          setAuthUser(null);
+          return;
+        }
+
+        const data = await response.json().catch(() => null);
+        if (data) {
+          setAuthUser(data);
+          localStorage.setItem('user', JSON.stringify(data));
+        } else {
+          setAuthUser(null);
+        }
+      } catch (e) {
+        setAuthUser(null);
+      }
+    };
+
+    loadAuthUser();
+  }, []);
+
+  useEffect(() => {
     const initData = async () => {
       try {
-        const visitorId = localStorage.getItem('visitorId');
-        // Register visitor on first load (non-blocking)
-        visitorAPI.register(visitorId).catch(() => {
-          console.log('Visitor registration failed (expected without backend)');
-        });
         // Then load month data
         await loadMonthData();
       } catch (error) {
-        console.log('Dashboard initialization failed, using fallback:', error);
-        // Fallback: just load localStorage data
-        const key = getStorageKey(`month_${selectedMonth}`);
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          setStudyHoursData(JSON.parse(stored));
-        }
+        console.log('Dashboard initialization failed:', error);
       }
     };
     initData();
   }, [selectedMonth]);
 
-  const getStorageKey = (prefix) => {
-    const visitorId = localStorage.getItem('visitorId');
-    return `${prefix}_${visitorId}_${new Date().getFullYear()}`;
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setAuthUser(null);
+    navigate('/');
   };
 
+  const isLoggedIn = Boolean(authUser && localStorage.getItem('token'));
+
   const loadMonthData = async () => {
-    const visitorId = localStorage.getItem('visitorId');
     const year = new Date().getFullYear();
+    const month = selectedMonth + 1;
     
-    // Try to load from backend first
     try {
-      const response = await visitorAPI.getStudyHours(visitorId, selectedMonth, year);
-      if (response.data && response.data.length > 0) {
-        // Create array from database records
-        const newData = Array(31).fill(0);
-        response.data.forEach(record => {
-          newData[record.day - 1] = record.hours;
-        });
-        setStudyHoursData(newData);
-        // Also cache in localStorage
-        const key = getStorageKey(`month_${selectedMonth}`);
-        localStorage.setItem(key, JSON.stringify(newData));
-        return;
-      }
+      const response = await studyHoursAPI.getMonthData(month, year);
+      const records = response?.data?.data || [];
+      const newData = Array(31).fill(0);
+      records.forEach((record) => {
+        newData[record.day - 1] = record.hours;
+      });
+      setStudyHoursData(newData);
+      return;
     } catch (error) {
-      console.log('Backend load failed, falling back to localStorage');
+      console.log('Backend load failed:', error);
     }
-    
-    // Fallback to localStorage if backend fails
-    const key = getStorageKey(`month_${selectedMonth}`);
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      setStudyHoursData(JSON.parse(stored));
-    } else {
-      setStudyHoursData(Array(31).fill(0));
-    }
+
+    setStudyHoursData(Array(31).fill(0));
   };
 
   const getMonthData = () => {
@@ -100,25 +118,20 @@ function Dashboard() {
 
   const saveDayHours = async () => {
     if (selectedDay !== null) {
-      const visitorId = localStorage.getItem('visitorId');
       const year = new Date().getFullYear();
+      const month = selectedMonth + 1;
       
       // Update local state immediately for instant UI response
       const newData = [...studyHoursData];
       newData[selectedDay - 1] = dailyHours;
       setStudyHoursData(newData);
       
-      // Cache in localStorage
-      const key = getStorageKey(`month_${selectedMonth}`);
-      localStorage.setItem(key, JSON.stringify(newData));
-      
       // Sync to backend
       setSyncing(true);
       try {
-        await visitorAPI.saveStudyHours(visitorId, selectedMonth, year, selectedDay, dailyHours);
+        await studyHoursAPI.saveDayHours(month, year, selectedDay, dailyHours);
       } catch (error) {
         console.error('Error syncing to backend:', error);
-        // Data is still saved in localStorage, so user won't lose anything
       } finally {
         setSyncing(false);
       }
@@ -137,25 +150,6 @@ function Dashboard() {
     return { totalHours: totalHours.toFixed(1), avgHours, progress };
   };
 
-  const resetData = async () => {
-    if (confirm('Are you sure you want to reset all data for this tracker? This cannot be undone.')) {
-      const visitorId = localStorage.getItem('visitorId');
-      const key = getStorageKey(`month_${selectedMonth}`);
-      localStorage.removeItem(key);
-      setStudyHoursData(Array(31).fill(0));
-      
-      // Also reset in backend
-      setSyncing(true);
-      try {
-        await visitorAPI.deleteAllData(visitorId);
-      } catch (error) {
-        console.error('Error resetting backend data:', error);
-      } finally {
-        setSyncing(false);
-      }
-    }
-  };
-
   return (
     <div className={`dashboard ${darkMode ? 'dark' : 'light'}`}>
       <div className="dashboard-container">
@@ -166,6 +160,8 @@ function Dashboard() {
               <Award className="logo-icon" />
             </div>
             <div>
+             {/* <button onClick={()=>navigate('/')}>
+              </button> */}
               <h1>Win GATE - Study Tracker</h1>
               <p>Track Your Daily Study Hours</p>
             </div>
@@ -175,28 +171,45 @@ function Dashboard() {
             <button onClick={() => setDarkMode(!darkMode)} className="theme-btn">
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button onClick={resetData} className="reset-btn" title="Reset all data for this tracker">
-              <RotateCw size={20} />
-              Reset
-            </button>
-            <div className="auth-buttons">
-              <button 
-                onClick={() => navigate('/login')} 
-                className="btn-login"
-                title="Login to your account"
-              >
-                <LogIn size={18} />
-                Login
-              </button>
-              <button 
-                onClick={() => navigate('/signup')} 
-                className="btn-signup"
-                title="Create a new account"
-              >
-                <UserPlus size={18} />
-                Sign Up
-              </button>
-            </div>
+            {isLoggedIn ? (
+              <div className="auth-buttons">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="btn-login"
+                  title="Your account"
+                >
+                  <UserCircle size={18} />
+                  {authUser?.name || authUser?.email || 'Account'}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="btn-signup"
+                  title="Logout"
+                >
+                  <LogOut size={18} />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="btn-login"
+                  title="Login to your account"
+                >
+                  <LogIn size={18} />
+                  Login
+                </button>
+                <button 
+                  onClick={() => navigate('/signup')} 
+                  className="btn-signup"
+                  title="Create a new account"
+                >
+                  <UserPlus size={18} />
+                  Sign Up
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

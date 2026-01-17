@@ -15,7 +15,7 @@ import random
 import string
 
 # Import our database models and dependencies
-from database_models import get_db, User, StudyHours, CurriculumData, VisitorData
+from database_models import get_db, User, StudyHours, CurriculumData
 from database_models import engine, SessionLocal
 from database_models import Base, create_tables
 
@@ -26,7 +26,7 @@ from utils import pwd_context, SECRET_KEY, ALGORITHM, create_access_token, verif
 from auth_endpoints import auth_router
 from study_hours_endpoints import study_router
 from curriculum_endpoints import curriculum_router
-from visitor_endpoints import visitor_router
+from otp_endpoints import otp_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -57,7 +57,7 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your-app-password")
 app.include_router(auth_router)
 app.include_router(study_router)
 app.include_router(curriculum_router)
-app.include_router(visitor_router)
+app.include_router(otp_router)
 
 # Initialize database tables
 @app.on_event("startup")
@@ -83,15 +83,13 @@ def get_api_docs_info():
         "endpoints": {
             "Authentication": "/api/auth",
             "Study Hours": "/api/study-hours",
-            "Curriculum": "/api/curriculum", 
-            "Visitor": "/api/visitor"
+            "Curriculum": "/api/curriculum"
         },
         "features": [
             "User registration with email verification",
             "JWT-based authentication",
-            "Study hours tracking for authenticated users and visitors",
+            "Study hours tracking for authenticated users",
             "Curriculum management with progress tracking",
-            "Visitor support for non-authenticated users",
             "PostgreSQL database with SQLAlchemy ORM"
         ]
     }

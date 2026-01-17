@@ -4,17 +4,21 @@ import os
 from datetime import datetime, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import HTTPException, status, Depends
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Security configuration
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 # Security instance
 security = HTTPBearer()
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return pwd_context.hash(password) 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)

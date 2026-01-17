@@ -6,7 +6,7 @@ from typing import List, Optional
 import os
 
 # Import our database models and dependencies
-from database_models import get_db, User, StudyHours, CurriculumData, VisitorData
+from database_models import get_db, User, StudyHours, CurriculumData
 from utils import pwd_context, SECRET_KEY, ALGORITHM, create_access_token, verify_token
 
 # Create router for study hours endpoints
@@ -24,7 +24,7 @@ class StudyHoursCreate(BaseModel):
 class StudyHoursResponse(BaseModel):
     id: int
     user_id: Optional[int] = None
-    visitor_id: Optional[str] = None
+    visitor_id: Optional[str] = None 
     month: int
     year: int
     day: int

@@ -1,0 +1,78 @@
+/* OTP-specific styles */
+.otp-input {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  font-family: 'Courier New', monospace;
+}
+
+.auth-back-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+}
+
+.auth-back-button:hover {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.auth-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.auth-button-secondary {
+  background: transparent !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #94a3b8 !important;
+  margin-top: 0.5rem;
+}
+
+.auth-button-secondary:hover {
+  background: rgba(148, 163, 184, 0.1) !important;
+  border-color: #60a5fa !important;
+  color: #60a5fa !important;
+}
+
+/* Progress indicator */
+.auth-progress {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  gap: 0.5rem;
+}
+
+.progress-step {
+  width: 2rem;
+  height: 0.25rem;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 0.125rem;
+  transition: all 0.3s;
+}
+
+.progress-step.active {
+  background: #3b82f6;
+}
+
+.progress-step.completed {
+  background: #22c55e;
+}
